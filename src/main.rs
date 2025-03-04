@@ -3,7 +3,7 @@ mod image_saver;
 mod image_editor;
 
 use gtk::prelude::*;
-use gtk::{Application, ApplicationWindow, Button, FileChooserDialog, FileChooserAction, ResponseType, Image as GtkImage, Box as GtkBox, Orientation, CssProvider};
+use gtk::{Application, ApplicationWindow, Button, FileChooserDialog, FileChooserAction, ResponseType, Image as GtkImage, Box as GtkBox, Orientation, ComboBoxText};
 use std::cell::RefCell;
 use std::rc::Rc;
 use image_loader::load_image;
@@ -23,50 +23,33 @@ fn build_ui(app: &Application) {
     let window = ApplicationWindow::builder()
         .application(app)
         .title("Rust Image Editor")
-        .default_width(800)  // Increased width for a larger window
-        .default_height(600) // Kept height the same
+        .default_width(800)
+        .default_height(600)
         .build();
-
-    // Apply custom CSS styling
-    let provider = CssProvider::new();
-    // Removed the 'b' prefix and used a string literal instead
-    provider.load_from_data("
-        window {
-            background-color: #f0f0f0;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            border-radius: 5px;
-            padding: 10px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        image {
-            border: 2px solid #ddd;
-            border-radius: 5px;
-        }
-    ");
-
-    // Apply the CSS provider directly to the window's style context
-    gtk::StyleContext::add_provider(&window.style_context(), &provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
 
     let vbox = GtkBox::new(Orientation::Vertical, 10);
     let open_button = Button::with_label("Open Image");
-    let apply_filter_button = Button::with_label("Apply Grayscale Filter");
+    let apply_filter_button = Button::with_label("Apply Filter");
     let save_button = Button::with_label("Save Image");
 
     let img_widget = GtkImage::new();
-    img_widget.set_size_request(600, 400); // Increased size for the image preview
+    img_widget.set_size_request(600, 400); // Increased preview size
 
     let image_state = Rc::new(RefCell::new(None));
+
+    // Dropdown for filter selection
+    let filter_dropdown = ComboBoxText::new();
+    filter_dropdown.append(Some("grayscale"), "Grayscale");
+    filter_dropdown.append(Some("sepia"), "Sepia");
+    filter_dropdown.append(Some("invert"), "Invert Colors");
+    filter_dropdown.append(Some("contrast"), "Increase Contrast");
+    filter_dropdown.set_active_id(Some("grayscale"));
 
     // Open Image Button
     let img_widget_clone = img_widget.clone();
     let image_state_clone = image_state.clone();
     let window_clone = window.clone();
-    
+
     open_button.connect_clicked(move |_| {
         let dialog = FileChooserDialog::new(
             Some("Open Image"),
@@ -98,19 +81,22 @@ fn build_ui(app: &Application) {
         dialog.show();
     });
 
-    // Apply Grayscale Filter Button
+    // Apply Filter Button
     let img_widget_clone = img_widget.clone();
     let image_state_clone = image_state.clone();
-    
+    let filter_dropdown_clone = filter_dropdown.clone();
+
     apply_filter_button.connect_clicked(move |_| {
         let mut image_ref = image_state_clone.borrow_mut();
         if let Some(img) = image_ref.take() {
-            let edited_img = apply_filter(img);
-            *image_ref = Some(edited_img.clone());
+            if let Some(filter_type) = filter_dropdown_clone.active_id() {
+                let edited_img = apply_filter(img, &filter_type.to_string());
+                *image_ref = Some(edited_img.clone());
 
-            let temp_path = "temp_output.png";
-            if save_image(&edited_img, temp_path).is_ok() {
-                img_widget_clone.set_from_file(Some(temp_path));
+                let temp_path = "temp_output.png";
+                if save_image(&edited_img, temp_path).is_ok() {
+                    img_widget_clone.set_from_file(Some(temp_path));
+                }
             }
         }
     });
@@ -151,6 +137,7 @@ fn build_ui(app: &Application) {
     // Layout
     vbox.append(&open_button);
     vbox.append(&img_widget);
+    vbox.append(&filter_dropdown);
     vbox.append(&apply_filter_button);
     vbox.append(&save_button);
     window.set_child(Some(&vbox));
