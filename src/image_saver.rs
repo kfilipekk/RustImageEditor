@@ -1,12 +1,8 @@
-use image::{DynamicImage, ImageOutputFormat};
+use image::DynamicImage;
 use std::fs::File;
-use std::io;
+use std::path::Path;
 
-pub fn save_image(img: &DynamicImage, path: &str) -> Result<(), io::Error> {
-    let mut output = File::create(path)?;
-
-    img.write_to(&mut output, ImageOutputFormat::Png)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
-
+pub fn save_image(img: &DynamicImage, path: &str) -> Result<(), Box<dyn std::error::Error>> {
+    img.save(path)?;
     Ok(())
 }
