@@ -4,11 +4,11 @@ mod image_editor;
 
 use gtk::prelude::*;
 use gtk::{Application, ApplicationWindow, Button, FileChooserDialog, FileChooserAction, ResponseType, Image as GtkImage, Box as GtkBox, Orientation, ComboBoxText};
-use std::cell::RefCell;
-use std::rc::Rc;
+use gtk::gdk;
+use gio::File;
 use image_loader::load_image;
 use image_saver::save_image;
-use image_editor::apply_filter;
+use image_editor::{apply_filter, apply_brightness, apply_contrast};
 
 fn main() {
     let app = Application::builder()
