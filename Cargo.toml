@@ -1,11 +1,10 @@
 [package]
 name = "rust-image-editor"
 version = "0.1.0"
-edition = "2024"
+edition = "2025"
 
 [dependencies]
-image = "0.24.7"
-gtk = { version = "0.9.6", package = "gtk4" }
-glib = "0.20.9"
-gio = "0.20.9"
-
+gtk = "0.18.2"
+gio = "0.9.6"
+image = "0.25"
+imageproc = "0.25"
